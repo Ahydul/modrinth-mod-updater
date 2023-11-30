@@ -44,7 +44,7 @@ def download_mod(url, file_name, old_name):
 
 # Tk().withdraw() 
 # filename = askopenfilename() 
-filename = "/home/ahydul/Documents/Programming/VSCode/modrinth-mod-updater"
+filename = "/home/ahydul/Documents/Programming/VSCode/modrinth-mod-updater/modrinth.index.json"
 
 with open(filename, "r") as read_file:
     data = json.load(read_file)['files']
