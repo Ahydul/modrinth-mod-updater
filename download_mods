@@ -11,14 +11,12 @@ VERSION_WANTED = ["1.20.1"]
 LOADER_WANTED = ["fabric"]
 DOWNLOAD_FOLDER = 'mods/'
 
-Tk().withdraw() 
-filename = askopenfilename() 
-
 
 file = open("error_mods.txt", "w")
 file.close()
 
 file = open("updated_mods.txt", "w")
+file.write("old mod"+','+'new mod'+'\n')
 file.close()
 
 def response_error(url, name):
@@ -36,22 +34,24 @@ def download_mod(url, file_name, old_name):
         #Save mod
         with open(DOWNLOAD_FOLDER + file_name, mode="wb") as file:
             file.write(response.content) 
-
+        #Update updated_mods.txt
         file = open("updated_mods.txt", "a")
-        file.write(old_name+'\n')
+        file.write(old_name+','+file_name+'\n')
         file.close()
-
     else:
         response_error(url, name)
 
 
+# Tk().withdraw() 
+# filename = askopenfilename() 
+filename = "/home/ahydul/Documents/Programming/VSCode/modrinth-mod-updater"
 
 with open(filename, "r") as read_file:
     data = json.load(read_file)['files']
 
     for mod in data:
         name = mod['path'][5:]
-        print("Updating mod: "+ name)
+        print("Checking updates for: "+ name)
         hash = mod['hashes']['sha512']
 
         url = BASE.replace("{hash}", hash)
@@ -72,7 +72,9 @@ with open(filename, "r") as read_file:
         download_url = file['url']
         file_name = file['filename']
 
+        #Skip if the file is the same
         if file_name == name:
             continue
+
         download_mod(download_url, file_name, name)
         
