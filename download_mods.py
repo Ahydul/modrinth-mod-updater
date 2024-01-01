@@ -1,23 +1,10 @@
 import requests
-from tkinter import Tk     
-from tkinter.filedialog import askopenfilename
 import json
 
 project_url = "https://api.modrinth.com/v2/project/"
 version_url = "https://api.modrinth.com/v2/version/"
 BASE = "https://api.modrinth.com/v2/version_file/{hash}/update"
-
-VERSION_WANTED = ["1.20.1"]
-LOADER_WANTED = ["fabric"]
 DOWNLOAD_FOLDER = 'mods/'
-
-
-file = open("error_mods.txt", "w")
-file.close()
-
-file = open("updated_mods.txt", "w")
-file.write("old mod"+','+'new mod'+'\n')
-file.close()
 
 def response_error(url, name):
     print('ERROR with url: '+ url)
@@ -42,39 +29,51 @@ def download_mod(url, file_name, old_name):
         response_error(url, name)
 
 
-# Tk().withdraw() 
-# filename = askopenfilename() 
-filename = "/home/ahydul/Documents/Programming/VSCode/modrinth-mod-updater/modrinth.index.json"
+def download_mods(instance_folder, filename):
+    version_wanted = []
+    loader_wanted = []
+    with open(instance_folder+'/instance.json', "r") as read_file:
+        data = json.load(read_file)['launcher']
+        version_wanted.append(data['version'])
+        loader_wanted.append(data['loaderVersion']['type'].lower())
 
-with open(filename, "r") as read_file:
-    data = json.load(read_file)['files']
+    file = open("error_mods.txt", "w")
+    file.close()
 
-    for mod in data:
-        name = mod['path'][5:]
-        print("Checking updates for: "+ name)
-        hash = mod['hashes']['sha512']
+    file = open("updated_mods.txt", "w")
+    file.write("old mod"+','+'new mod'+'\n')
+    file.close()
 
-        url = BASE.replace("{hash}", hash)
-        params = {
-            'algorithm':"sha512"
-        }
-        data = {
-            "loaders": LOADER_WANTED,
-            "game_versions": VERSION_WANTED,
-        }
 
-        response = requests.post(url, json=data, params=params)
-        if response.status_code!=200:
-            response_error(url, name)
-            continue
+    with open(filename, "r") as read_file:
+        data = json.load(read_file)['files']
 
-        file = response.json()['files'][0]
-        download_url = file['url']
-        file_name = file['filename']
+        for mod in data:
+            name = mod['path'][5:]
+            print("Checking updates for: "+ name)
+            hash = mod['hashes']['sha512']
 
-        #Skip if the file is the same
-        if file_name == name:
-            continue
+            url = BASE.replace("{hash}", hash)
+            params = {
+                'algorithm':"sha512"
+            }
+            data = {
+                "loaders": loader_wanted,
+                "game_versions": version_wanted,
+            }
 
-        download_mod(download_url, file_name, name)
-        
+            response = requests.post(url, json=data, params=params)
+            if response.status_code!=200:
+                response_error(url, name)
+                continue
+
+            file = response.json()['files'][0]
+            download_url = file['url']
+            file_name = file['filename']
+
+            #Skip if the file is the same
+            if file_name == name:
+                continue
+
+            download_mod(download_url, file_name, name)
+            
