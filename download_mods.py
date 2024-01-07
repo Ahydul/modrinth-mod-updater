@@ -29,13 +29,13 @@ def download_mod(url, file_name, old_name):
         response_error(url, name)
 
 
-def download_mods(instance_folder, filename):
+def download_mods(instance_folder, filename, loader_wanted = []):
     version_wanted = []
-    loader_wanted = []
     with open(instance_folder+'/instance.json', "r") as read_file:
         data = json.load(read_file)['launcher']
         version_wanted.append(data['version'])
-        loader_wanted.append(data['loaderVersion']['type'].lower())
+        if loader_wanted is not []:
+            loader_wanted.append(data['loaderVersion']['type'].lower())
 
     file = open("error_mods.txt", "w")
     file.close()
