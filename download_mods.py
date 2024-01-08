@@ -1,11 +1,10 @@
 import requests
 import json
+import os
+from dotenv import load_dotenv
 from move_new_mods import move_new_mods
 
-# project_url = "https://api.modrinth.com/v2/project/"
-# version_url = "https://api.modrinth.com/v2/version/"
-
-api = ''
+load_dotenv()
 
 BASE_MODRINTH = "https://api.modrinth.com/v2/version_file/{hash}/update"
 BASE_CURSEFORGE = "https://api.curseforge.com/v1/mods/{mod_id}/files"
@@ -13,17 +12,21 @@ LOADERS_CURSEFORGE = {
     'fabric': 4,
     'quilt': 5,
 }
-DOWNLOAD_FOLDER = 'mods/'
+
+COURSEFORGE_API = os.environ['COURSEFORGE_API']
+DOWNLOADED_MODS = os.environ["DOWNLOADED_MODS_TXT"]
+ERROR_MODS = os.environ["ERROR_MODS_TXT"]
+DOWNLOAD_FOLDER = os.environ["DOWNLOAD_FOLDER"] + '/'
 
 def reset_logs():
-    file = open("error_mods.txt", "w")
+    file = open(ERROR_MODS, "w")
     file.close()
-    with open("downloaded_mods.txt", "w") as file:
+    with open(DOWNLOADED_MODS, "w") as file:
         file.write("old mod"+','+'new mod'+'\n')
 
 def response_error(url, file_name):
     print('ERROR with url: '+ url)
-    with open("error_mods.txt", "a") as file:
+    with open(ERROR_MODS, "a") as file:
         file.write(file_name+'\n')
 
 
@@ -35,8 +38,8 @@ def download_mod(url, file_name, old_name, source):
         #Save mod
         with open(DOWNLOAD_FOLDER + file_name, mode="wb") as file:
             file.write(response.content) 
-        #Update downloaded_mods.txt
-        with open("downloaded_mods.txt", "a") as file:
+
+        with open(DOWNLOADED_MODS, "a") as file:
             file.write(old_name+','+file_name+'\n')
     else:
         response_error(url, old_name)
@@ -88,7 +91,7 @@ def download_mods(version_wanted, loader_wanted, mods):
             }
             headers = {
                 'Accept': 'application/json',
-                'x-api-key': api,
+                'x-api-key': COURSEFORGE_API,
             }
 
             response = requests.get(url, headers=headers, params=params)
@@ -116,18 +119,19 @@ def update_mods(instance_folder):
         version_wanted = data['version']
         loader_wanted = data['loaderVersion']['type'].lower()
 
-        condition = lambda m: m['type'] == 'mods' 
+        condition = lambda m: m['type'] == 'mods' and m['disabled'] == False
         mods = filter(condition, data['mods'])
 
     download_mods(mods=mods, version_wanted=version_wanted, loader_wanted=loader_wanted)
 
     move_new_mods(instance_folder=instance_folder)
 
+
 def update_error_mods(instance_folder): 
     mod_errors = []
-    with open('error_mods.txt', "r") as file:
+    with open(ERROR_MODS, "r") as file:
         for line in file:
-            mod_errors.append(line[:line.index(',')])
+            mod_errors.append(line.replace('\n',''))
 
     reset_logs()  
 
@@ -136,7 +140,7 @@ def update_error_mods(instance_folder):
         version_wanted = data['version']
         loader_wanted = data['loaderVersion']['type'].lower()
 
-        condition = lambda m: m['type'] == 'mods' and  \
+        condition = lambda m: m['type'] == 'mods' and m['disabled'] == False and  \
                             m['file'] in mod_errors
         mods = filter(condition, data['mods'])
 

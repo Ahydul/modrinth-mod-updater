@@ -1,5 +1,7 @@
 mods/
-updated_mods.txt
+downloaded_mods.txt
 error_mods.txt
 modrinth.index.json
 __pycache__
+venv
+.env
